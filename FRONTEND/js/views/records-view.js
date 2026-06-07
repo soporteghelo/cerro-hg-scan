@@ -115,65 +115,53 @@ var REC = {
     }
 
     data.forEach(function (r, i) {
-      var links  = r.links ? r.links.split('\n').filter(Boolean) : [];
-      var color  = REC._typeColor(r.tipo);
-      var isOPT  = r.evaluado && r.evaluado !== 'COMPLETADO';
-      var card   = document.createElement('div');
+      var color   = REC._typeColor(r.tipo);
+      var isOPT   = r.evaluado && r.evaluado !== 'COMPLETADO';
+      var card    = document.createElement('div');
 
       card.style.cssText =
-        'background:#fff;border-radius:14px;margin-bottom:10px;border:1px solid var(--border);' +
-        'overflow:hidden;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.07);' +
-        'animation:fadeIn .22s ease both;animation-delay:' + Math.min(i * .04, .28) + 's';
+        'background:#fff;border-radius:12px;margin-bottom:7px;border:1px solid var(--border);' +
+        'overflow:hidden;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.06);' +
+        'animation:fadeIn .2s ease both;animation-delay:' + Math.min(i * .03, .24) + 's';
       card.onclick = function () { REC.detail(r); };
 
       card.innerHTML =
         '<div style="display:flex">' +
-          '<div style="width:5px;background:' + color + ';flex-shrink:0"></div>' +
-          '<div style="padding:11px 12px;flex:1;min-width:0">' +
+          '<div style="width:4px;background:' + color + ';flex-shrink:0"></div>' +
+          '<div style="padding:8px 11px;flex:1;min-width:0">' +
 
-            /* Header row */
-            '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px">' +
-              '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0">' +
-                '<span style="font-weight:800;font-size:.9rem;color:' + color + '">' + r.tipo + '</span>' +
-                (links.length > 1 ? '<span style="background:' + color + '22;color:' + color + ';font-size:.65rem;border-radius:99px;padding:1px 7px;font-weight:800">' + links.length + ' archivos</span>' : '') +
-              '</div>' +
-              (isOPT
-                ? '<div style="flex-shrink:0;text-align:right;max-width:130px">' +
-                    '<div style="font-size:.62rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:1px">Evaluado</div>' +
-                    '<div style="font-size:.72rem;font-weight:700;line-height:1.2;color:var(--text)">' + r.evaluado + '</div>' +
-                    (r.evaluadoCargo ? '<div style="font-size:.64rem;color:var(--text-muted)">' + r.evaluadoCargo + '</div>' : '') +
-                  '</div>'
-                : '<span style="background:#e8f5e9;color:#2e7d32;font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:99px;flex-shrink:0;white-space:nowrap">COMPLETADO</span>'
-              ) +
-            '</div>' +
-
-            /* Person row */
-            '<div style="font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.nombre||'') + '</div>' +
-            '<div style="font-size:.71rem;color:var(--text-muted);margin-top:1px">' + r.dni + (r.cargo ? ' · ' + r.cargo : '') + '</div>' +
-
-            /* Meta row */
-            '<div style="display:flex;align-items:center;gap:10px;margin-top:5px;flex-wrap:wrap">' +
-              '<span style="display:flex;align-items:center;gap:3px;font-size:.71rem;color:var(--text-muted)">' +
-                '<span class="material-icons" style="font-size:.82rem">event</span>' + (r.fechaHerramienta||'—') +
+            /* Fila 1: tipo + fecha ejecución */
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">' +
+              '<span style="font-weight:800;font-size:.82rem;color:' + color + ';letter-spacing:.2px">' + r.tipo + '</span>' +
+              '<span style="display:flex;align-items:center;gap:2px;font-size:.7rem;color:var(--text-muted);white-space:nowrap">' +
+                '<span class="material-icons" style="font-size:.78rem">event</span>' + (r.fechaHerramienta || '—') +
               '</span>' +
-              (r.area ? '<span style="font-size:.69rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:1px 7px;color:var(--text-muted)">' + r.area + '</span>' : '') +
             '</div>' +
 
-            /* Links */
-            (links.length
-              ? '<div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap">' +
-                  links.slice(0,3).map(function (lk, j) {
-                    return '<a href="' + lk + '" target="_blank" onclick="event.stopPropagation()" ' +
-                      'style="display:inline-flex;align-items:center;gap:3px;background:var(--bg);border:1px solid var(--border);' +
-                      'border-radius:6px;padding:3px 8px;font-size:.7rem;font-weight:600;color:var(--primary);text-decoration:none">' +
-                      '<span class="material-icons" style="font-size:.78rem">attach_file</span>Archivo ' + (j + 1) + '</a>';
-                  }).join('') +
-                  (links.length > 3 ? '<span style="font-size:.68rem;color:var(--text-muted);padding:3px 6px">+' + (links.length - 3) + ' más</span>' : '') +
-                '</div>'
-              : '') +
+            /* Fila 2: evaluador */
+            '<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">' +
+              '<span style="font-size:.63rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;white-space:nowrap">Eval.</span>' +
+              '<span style="font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.nombre || '—') + '</span>' +
+            '</div>' +
 
-            /* Footer */
-            '<div style="text-align:right;font-size:.66rem;color:var(--text-muted);margin-top:4px">' + (r.fechaCarga||'') + '</div>' +
+            /* Fila 3: evaluado + cargo */
+            (isOPT
+              ? '<div style="display:flex;align-items:flex-start;gap:4px;margin-bottom:3px">' +
+                  '<span style="font-size:.63rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;white-space:nowrap;padding-top:1px">Evdo.</span>' +
+                  '<div style="min-width:0">' +
+                    '<div style="font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + r.evaluado + '</div>' +
+                    (r.evaluadoCargo
+                      ? '<div style="font-size:.68rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + r.evaluadoCargo + '</div>'
+                      : '') +
+                  '</div>' +
+                '</div>'
+              : '<div style="margin-bottom:3px"><span style="background:#e8f5e9;color:#2e7d32;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:99px">COMPLETADO</span></div>'
+            ) +
+
+            /* Fila 4: área */
+            (r.area
+              ? '<div style="margin-top:1px"><span style="font-size:.67rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:1px 7px;color:var(--text-muted)">' + r.area + '</span></div>'
+              : '') +
 
           '</div>' +
         '</div>';
