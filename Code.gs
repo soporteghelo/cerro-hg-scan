@@ -479,60 +479,16 @@ function uploadFileToDrive_(base64,mimeType,ext,formData,seqOffset){
 function uploadFiles(filesData, formData) {
   try {
     var links = [], nombres = [];
-    var allImages = filesData.length > 0 && filesData.every(function(f) {
-      return String(f.mimeType || '').indexOf('image/') === 0;
-    });
-    if (allImages) {
-      var r = compileImagesToPdf_(filesData, formData);
+    for (var i = 0; i < filesData.length; i++) {
+      var f = filesData[i];
+      var r = uploadFileToDrive_(f.base64, f.mimeType, f.ext, formData, i + 1);
       links.push(r.link); nombres.push(r.nombre);
-    } else {
-      for (var i = 0; i < filesData.length; i++) {
-        var f = filesData[i];
-        var res = uploadFileToDrive_(f.base64, f.mimeType, f.ext, formData, i + 1);
-        links.push(res.link); nombres.push(res.nombre);
-      }
     }
     formData.links    = links.join('\n');
     formData.archivos = nombres.join(', ');
     formData.cantidad = filesData.length;
     return saveRegistro(formData);
   } catch(err) { return { ok:false, msg:err.message }; }
-}
-
-function compileImagesToPdf_(imagesData, formData) {
-  var doc = DocumentApp.create('_hs_' + generateId_());
-  try {
-    var body = doc.getBody();
-    body.setPageWidth(595.28); body.setPageHeight(841.89);
-    body.setMarginTop(10); body.setMarginBottom(10);
-    body.setMarginLeft(10); body.setMarginRight(10);
-    var maxW = 575, maxH = 821;
-    imagesData.forEach(function(img, i) {
-      if (i > 0) body.appendPageBreak();
-      var blob = Utilities.newBlob(Utilities.base64Decode(img.base64), img.mimeType, 'img' + i);
-      var el = body.appendImage(blob);
-      var ratio = el.getHeight() / el.getWidth();
-      if (ratio > maxH / maxW) { el.setHeight(maxH); el.setWidth(maxH / ratio); }
-      else                     { el.setWidth(maxW);  el.setHeight(maxW * ratio); }
-    });
-    doc.saveAndClose();
-    var docFile = DriveApp.getFileById(doc.getId());
-    var pdfBlob = docFile.getAs('application/pdf');
-    var parts = String(formData.fechaHerramienta || '').split('-');
-    var anio = parts[0] || String(new Date().getFullYear());
-    var mes  = (parts[1]||'').padStart(2,'0') || String(new Date().getMonth()+1).padStart(2,'0');
-    var dia  = (parts[2]||'').padStart(2,'0') || String(new Date().getDate()).padStart(2,'0');
-    var folder   = buildFolderPath_(anio, mes, formData.nombre, formData.dni);
-    var evaluado = tipoRequiereNombre_(formData.tipo) ? (formData.evaluado||'SN') : 'SN';
-    var seq  = countExistingFiles_(folder, anio, mes, dia, formData.tipo, evaluado) + 1;
-    var name = buildFileName_(anio, mes, dia, formData.tipo, evaluado, seq, 'pdf');
-    pdfBlob.setName(name);
-    var saved = folder.createFile(pdfBlob);
-    saved.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    return { link: 'https://drive.google.com/file/d/' + saved.getId() + '/view', nombre: name };
-  } finally {
-    try { DriveApp.getFileById(doc.getId()).setTrashed(true); } catch(e) {}
-  }
 }
 
 // ────────────────────────────────────────────────────────────────

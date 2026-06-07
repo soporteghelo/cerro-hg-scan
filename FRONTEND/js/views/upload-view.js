@@ -613,17 +613,19 @@ var UP = {
 
       UP._saveArea(entry.area.trim()); // Guardar en historial
 
-      UP._readB64(entry.files, function (filesData) {
-        API.upload(filesData, {
-          dni:              entry.dniData.dni,
-          nombre:           entry.dniData.nombre,
-          cargo:            entry.dniData.cargo || '',
-          area:             entry.area.trim(),
-          fechaHerramienta: entry.fecha,
-          tipo:             entry.tipo,
-          cantidad:         entry.files.length,
-          evaluado:         entry.evaluado || ''
-        }).then(function (res) {
+      var _formData = {
+        dni:              entry.dniData.dni,
+        nombre:           entry.dniData.nombre,
+        cargo:            entry.dniData.cargo || '',
+        area:             entry.area.trim(),
+        fechaHerramienta: entry.fecha,
+        tipo:             entry.tipo,
+        cantidad:         entry.files.length,
+        evaluado:         entry.evaluado || ''
+      };
+
+      var _doUpload = function (filesData) {
+        API.upload(filesData, _formData).then(function (res) {
           if (res.ok) { done++; processNext(); }
           else {
             setLoading(btn, false);
@@ -636,9 +638,59 @@ var UP = {
           document.getElementById('up-progress').classList.remove('show');
           toast('Error de conexión en herramienta #' + (done+1), 'error', 4000);
         });
+      };
+
+      var allImages = entry.files.length > 0 && entry.files.every(function(f) {
+        return f.type.startsWith('image/');
       });
+
+      if (allImages) {
+        // Compilar fotos a PDF A4 en el navegador antes de subir
+        UP._compileToPdf_(entry.files, function (pdfB64) {
+          _doUpload([{ base64: pdfB64, mimeType: 'application/pdf', ext: 'pdf', name: 'documento.pdf' }]);
+        });
+      } else {
+        UP._readB64(entry.files, _doUpload);
+      }
     };
     processNext();
+  },
+
+  // ── Compilar fotos a PDF A4 (client-side con jsPDF) ─────────
+  _compileToPdf_: function (files, cb) {
+    var JSPDF = window.jspdf && window.jspdf.jsPDF;
+    if (!JSPDF) { toast('Librería PDF no cargada, reintenta en unos segundos', 'error'); return; }
+    var doc   = new JSPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    var pW = 210, pH = 297;
+    var total = files.length, done = 0;
+    var images = new Array(total);
+
+    files.forEach(function (f, i) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var dataUrl = e.target.result;
+        var img = new Image();
+        img.onload = function () {
+          images[i] = { dataUrl: dataUrl, w: img.width, h: img.height, type: f.type };
+          if (++done === total) {
+            images.forEach(function (d, idx) {
+              if (idx > 0) doc.addPage();
+              var ratio = d.w / d.h;
+              var iW, iH;
+              if (ratio > pW / pH) { iW = pW; iH = pW / ratio; }
+              else                 { iH = pH; iW = pH * ratio; }
+              var x = (pW - iW) / 2, y = (pH - iH) / 2;
+              var fmt = d.type === 'image/png' ? 'PNG' : d.type === 'image/webp' ? 'WEBP' : 'JPEG';
+              doc.addImage(d.dataUrl, fmt, x, y, iW, iH);
+            });
+            var b64 = doc.output('datauristring').split(',')[1];
+            cb(b64);
+          }
+        };
+        img.src = dataUrl;
+      };
+      reader.readAsDataURL(f);
+    });
   },
 
   _readB64: function (files, cb) {
