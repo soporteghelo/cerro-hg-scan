@@ -286,39 +286,76 @@
   <div class="app-header">
     <span class="material-icons">list_alt</span>
     <h2>Registros</h2>
-    <button class="icon-btn" id="rec-export" onclick="REC.export()" style="display:none">
-      <span class="material-icons" style="font-size:1.1rem">table_chart</span>
+    <button class="icon-btn" id="rec-export" onclick="REC.exportXlsx()" title="Exportar Excel">
+      <span class="material-icons" style="font-size:1.15rem">download</span>
     </button>
   </div>
 
-  <div style="background:#fff;border-bottom:1px solid var(--border);padding:10px 14px">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <select class="form-control" id="rec-tipo" onchange="REC.load()" style="min-height:42px;font-size:.83rem">
+  <!-- Filtros -->
+  <div style="background:#fff;border-bottom:1px solid var(--border);padding:10px 14px 12px">
+    <div style="font-size:.68rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;display:flex;align-items:center;gap:4px">
+      <span class="material-icons" style="font-size:.85rem">filter_alt</span>Filtros
+    </div>
+
+    <!-- Fila 1: Tipo + Evaluador -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px">
+      <select class="form-control" id="rec-tipo" onchange="REC.applyFilters()" style="min-height:40px;font-size:.8rem">
         <option value="">Todos los tipos</option>
       </select>
-      <select class="form-control" id="rec-eval" onchange="REC.load()" style="min-height:42px;font-size:.83rem">
-        <option value="">Todos</option>
-        <option value="COMPLETADO">Completado</option>
-        <option value="PENDIENTE">Pendiente</option>
-      </select>
+      <div style="position:relative">
+        <span class="material-icons" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:.9rem;color:var(--text-muted);pointer-events:none">manage_accounts</span>
+        <input type="text" id="rec-f-evaluador" class="form-control" placeholder="Evaluador…"
+          oninput="REC.applyFilters()" style="min-height:40px;font-size:.8rem;padding-left:30px;text-transform:uppercase"
+          oninput="this.value=this.value.toUpperCase();REC.applyFilters()">
+      </div>
     </div>
-    <div id="rec-search-wrap" style="display:none;margin-top:8px;position:relative">
-      <span class="material-icons" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:1.1rem">search</span>
-      <input type="text" id="rec-search" class="form-control" placeholder="Buscar por nombre o DNI…"
-        oninput="REC.filter()" style="padding-left:40px;min-height:42px;font-size:.85rem">
+
+    <!-- Fila 2: Evaluado + Persona/DNI -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px">
+      <div style="position:relative">
+        <span class="material-icons" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:.9rem;color:var(--text-muted);pointer-events:none">person_search</span>
+        <input type="text" id="rec-f-evaluado" class="form-control" placeholder="Evaluado…"
+          style="min-height:40px;font-size:.8rem;padding-left:30px;text-transform:uppercase"
+          oninput="this.value=this.value.toUpperCase();REC.applyFilters()">
+      </div>
+      <div style="position:relative">
+        <span class="material-icons" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:.9rem;color:var(--text-muted);pointer-events:none">search</span>
+        <input type="text" id="rec-f-persona" class="form-control" placeholder="Nombre o DNI…"
+          style="min-height:40px;font-size:.8rem;padding-left:30px"
+          oninput="REC.applyFilters()">
+      </div>
+    </div>
+
+    <!-- Fila 3: Fecha desde/hasta -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+      <div>
+        <div style="font-size:.65rem;color:var(--text-muted);font-weight:600;margin-bottom:3px">Fecha ejec. desde</div>
+        <input type="date" id="rec-f-desde" class="form-control" onchange="REC.applyFilters()" style="min-height:40px;font-size:.8rem">
+      </div>
+      <div>
+        <div style="font-size:.65rem;color:var(--text-muted);font-weight:600;margin-bottom:3px">Fecha ejec. hasta</div>
+        <input type="date" id="rec-f-hasta" class="form-control" onchange="REC.applyFilters()" style="min-height:40px;font-size:.8rem">
+      </div>
     </div>
   </div>
 
-  <div style="padding:8px 14px 4px;display:flex;justify-content:space-between;align-items:center">
-    <span id="rec-count" style="font-size:.78rem;color:var(--text-muted)">Cargando…</span>
-    <button onclick="REC.load()" style="background:none;border:none;cursor:pointer;color:var(--primary);font-size:.75rem;font-weight:700;display:flex;align-items:center;gap:2px">
-      <span class="material-icons" style="font-size:.9rem">refresh</span>Actualizar
-    </button>
+  <!-- Barra de estado -->
+  <div style="padding:7px 14px 4px;display:flex;justify-content:space-between;align-items:center">
+    <span id="rec-count" style="font-size:.76rem;color:var(--text-muted)">Cargando…</span>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button onclick="REC.clearFilters()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.73rem;font-weight:600;display:flex;align-items:center;gap:2px">
+        <span class="material-icons" style="font-size:.88rem">filter_alt_off</span>Limpiar
+      </button>
+      <button onclick="REC.load()" style="background:none;border:none;cursor:pointer;color:var(--primary);font-size:.73rem;font-weight:700;display:flex;align-items:center;gap:2px">
+        <span class="material-icons" style="font-size:.88rem">refresh</span>Actualizar
+      </button>
+    </div>
   </div>
-  <div style="padding:0 14px 14px" id="rec-list">
-    <div class="skel" style="height:70px;border-radius:14px;margin-bottom:8px"></div>
-    <div class="skel" style="height:70px;border-radius:14px;margin-bottom:8px"></div>
-    <div class="skel" style="height:70px;border-radius:14px"></div>
+
+  <div style="padding:4px 14px 70px" id="rec-list">
+    <div class="skel" style="height:90px;border-radius:14px;margin-bottom:10px"></div>
+    <div class="skel" style="height:90px;border-radius:14px;margin-bottom:10px"></div>
+    <div class="skel" style="height:90px;border-radius:14px"></div>
   </div>
 </div>
 
@@ -389,6 +426,7 @@
 <!-- ══════════════════════════════════════════════════
      SCRIPTS
 ══════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="js/config.js?v=6"></script>
 <script src="js/api.js?v=7"></script>
 <script src="js/app.js?v=6"></script>
@@ -398,7 +436,7 @@
 <script src="js/views/upload-view.js?v=6"></script>
 <script src="js/views/progress-view.js?v=7"></script>
 <script src="js/views/tipos-view.js?v=7"></script>
-<script src="js/views/records-view.js?v=6"></script>
+<script src="js/views/records-view.js?v=7"></script>
 
 <script>
 // Inicializar dots de login
