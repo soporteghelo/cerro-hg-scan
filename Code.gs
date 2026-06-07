@@ -137,7 +137,7 @@ function getRootDriveFolder_() {
 function setupSpreadsheet_(ss, personalId) {
   var reg=getOrCreateSheet_(ss,'REGISTRO');
   if(reg.getLastRow()===0) {
-    reg.appendRow(['ID','DNI','APELLIDOS Y NOMBRES','CARGO','AREA','FECHA_HERRAMIENTA','FECHA_CARGA','TIPO_HERRAMIENTA','CANTIDAD','EVALUADO','LINK_HERRAMIENTA','AÑO','MES','NOMBRE_ARCHIVO']);
+    reg.appendRow(['ID','DNI','APELLIDOS Y NOMBRES','CARGO','AREA','FECHA_HERRAMIENTA','FECHA_CARGA','TIPO_HERRAMIENTA','CANTIDAD','EVALUADO','EVALUADO_CARGO','LINK_HERRAMIENTA','AÑO','MES','NOMBRE_ARCHIVO']);
     formatHeader_(reg,'#1a237e'); reg.setColumnWidth(11,350); reg.setColumnWidth(6,130); reg.setColumnWidth(7,155); reg.setFrozenRows(1); reg.setTabColor('#1a237e');
   }
   var per=getOrCreateSheet_(ss,'PERSONAL');
@@ -291,15 +291,15 @@ function getRegistros(dni, filtros) {
       var row=data[i];
       if(!master&&normDNI_(row[1])!==normDNI_(dni)) continue;
       if(filtros){
-        if(filtros.anio&&String(row[11])!==String(filtros.anio)) continue;
-        if(filtros.mes&&String(row[12])!==String(filtros.mes)) continue;
+        if(filtros.anio&&String(row[12])!==String(filtros.anio)) continue;
+        if(filtros.mes&&String(row[13])!==String(filtros.mes)) continue;
         if(filtros.tipo&&row[7]!==filtros.tipo) continue;
         if(filtros.evaluado&&row[9]!==filtros.evaluado) continue;
       }
       result.push({id:row[0],dni:row[1],nombre:row[2],cargo:row[3],area:row[4],
         fechaHerramienta:row[5]?Utilities.formatDate(new Date(row[5]),tz,'dd/MM/yyyy'):'',
         fechaCarga:row[6]?Utilities.formatDate(new Date(row[6]),tz,'dd/MM/yyyy HH:mm'):'',
-        tipo:row[7],cantidad:row[8],evaluado:row[9],links:row[10],anio:row[11],mes:row[12],archivos:row[13]});
+        tipo:row[7],cantidad:row[8],evaluado:row[9],evaluadoCargo:row[10],links:row[11],anio:row[12],mes:row[13],archivos:row[14]});
     }
     return result.reverse();
   } catch(err){return [];}
@@ -318,7 +318,8 @@ function saveRegistro(data) {
     var newId=generateId_();
     var now=new Date(); var anio=now.getFullYear(); var mes=String(now.getMonth()+1).padStart(2,'0');
     var fechaHerr=Utilities.parseDate(String(data.fechaHerramienta||''),'America/Lima','yyyy-MM-dd');
-    sheet.appendRow([newId,data.dni,data.nombre,data.cargo,data.area,fechaHerr,now,data.tipo,data.cantidad,data.evaluado||'COMPLETADO',data.links,anio,mes,data.archivos]);
+    var evaluadoCargo = lookupCargoByNombre_(data.evaluado || '');
+    sheet.appendRow([newId,data.dni,data.nombre,data.cargo,data.area,fechaHerr,now,data.tipo,data.cantidad,data.evaluado||'COMPLETADO',evaluadoCargo,data.links,anio,mes,data.archivos]);
     // Usar año/mes de FECHA_HERRAMIENTA para recalcular programados
     var hParts  = String(data.fechaHerramienta||'').split('-');
     var anioEjec = hParts[0] ? parseInt(hParts[0],10) : anio;
@@ -326,6 +327,23 @@ function saveRegistro(data) {
     actualizarEjecutados_(ss,data.dni,data.tipo,anioEjec,mesEjec);
     return {ok:true,id:newId};
   } catch(err){return {ok:false,msg:err.message};}
+}
+
+// Busca CARGO en CFG_PERSONAL_URL por APELLIDOS Y NOMBRES (col F=5, CARGO col I=8)
+function lookupCargoByNombre_(nombre) {
+  try {
+    nombre = String(nombre || '').trim().toUpperCase();
+    if (!nombre || nombre === 'COMPLETADO') return '';
+    var ps    = SpreadsheetApp.openById(getPersonalSheetId_());
+    var sheet = ps.getSheetByName('REGISTER');
+    if (!sheet) return 'SIN CARGO';
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][5] || '').trim().toUpperCase() === nombre)
+        return String(data[i][8] || '').trim() || 'SIN CARGO';
+    }
+    return 'SIN CARGO';
+  } catch (e) { return 'SIN CARGO'; }
 }
 
 function getProgramados(dni, anio, mes) {
