@@ -397,14 +397,22 @@ function normMes_(m) { return parseInt(m, 10); }
 // Normaliza DNI: número o texto → string de 8 dígitos con ceros a la izquierda
 function normDNI_(d) { return String(d || '').replace(/\D/g, '').padStart(8, '0'); }
 
+// Convierte valor de celda a Date de forma robusta (Date nativo, número serial o string)
+function toDate_(v) {
+  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+  if (typeof v === 'number' && v > 0) return new Date(Math.round((v - 25569) * 86400000));
+  if (typeof v === 'string' && v.trim()) { var d = new Date(v); return isNaN(d.getTime()) ? null : d; }
+  return null;
+}
+
 function actualizarEjecutados_(ss,dni,tipo,anio,mes) {
   var rS=ss.getSheetByName('REGISTRO'); var pS=ss.getSheetByName('PROGRAMADOS');
   if(!pS||pS.getLastRow()<2) return;
   var rD=rS.getDataRange().getValues(); var count=0;
   var mesN=normMes_(mes); var anioN=parseInt(anio,10);
   for(var i=1;i<rD.length;i++) {
-    var fH=rD[i][5]; // FECHA_HERRAMIENTA
-    if(!(fH instanceof Date)) continue;
+    var fH=toDate_(rD[i][5]); // FECHA_HERRAMIENTA
+    if(!fH) continue;
     if(normDNI_(rD[i][1])===normDNI_(dni) &&
        rD[i][7]===tipo &&
        fH.getFullYear()===anioN &&
@@ -630,18 +638,16 @@ function recalcularTodo(anio, mes) {
     var rD = (rS && rS.getLastRow() > 1) ? rS.getDataRange().getValues() : [[]];
     var pD = pS.getDataRange().getValues();
     var anioN = anio ? parseInt(anio, 10) : null;
-    var mesN  = mes  ? normMes_(mes)      : null;
     var updated = 0;
     for (var j = 1; j < pD.length; j++) {
       var row   = pD[j];
       var pAnio = parseInt(row[3], 10);
       var pMes  = normMes_(row[4]);
       if (anioN && pAnio !== anioN) continue;
-      if (mesN  && pMes  !== mesN)  continue;
       var count = 0;
       for (var i = 1; i < rD.length; i++) {
-        var fH = rD[i][5]; // FECHA_HERRAMIENTA
-        if (!(fH instanceof Date)) continue;
+        var fH = toDate_(rD[i][5]); // FECHA_HERRAMIENTA
+        if (!fH) continue;
         if (normDNI_(rD[i][1]) === normDNI_(row[0]) &&
             rD[i][7]             === row[2]          &&
             fH.getFullYear()     === pAnio           &&
