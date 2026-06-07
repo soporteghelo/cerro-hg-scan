@@ -83,12 +83,16 @@ var DASH = {
   buildYearFilter: function () {
     var sel = document.getElementById('filter-anio');
     if (sel.options.length > 1) return;
-    var y = new Date().getFullYear();
+    var now = new Date();
+    var y = now.getFullYear();
     for (var i = y; i >= y - 4; i--) {
       var o = document.createElement('option'); o.value = i; o.textContent = i;
       if (i === y) o.selected = true;
       sel.appendChild(o);
     }
+    // Mes actual por defecto
+    var mesEl = document.getElementById('filter-mes');
+    if (mesEl && !mesEl.value) mesEl.value = String(now.getMonth() + 1).padStart(2, '0');
   },
 
   render: function (data) {
