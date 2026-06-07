@@ -67,6 +67,14 @@ var API = {
     return API._post({ action: 'addTipo', tipo: tipo });
   },
 
+  editTipo: function (old, nuevo) {
+    return API._post({ action: 'editTipo', old: old, nuevo: nuevo });
+  },
+
+  deleteTipo: function (tipo) {
+    return API._post({ action: 'deleteTipo', tipo: tipo });
+  },
+
   register: function (dni, apellidos, nombres) {
     return API._post({ action: 'register', dni: dni, apellidos: apellidos, nombres: nombres });
   },

@@ -57,6 +57,8 @@ function doPost(e) {
       case 'config':    out = validateAndSaveConfig(body.sheetsUrl, body.driveUrl, body.personalUrl); break;
       case 'upload':    out = uploadFiles(body.filesData, body.formData); break;
       case 'addTipo':    out = addTipoHerramienta(body.tipo); break;
+      case 'editTipo':   out = editTipoHerramienta(body.old, body.nuevo); break;
+      case 'deleteTipo': out = deleteTipoHerramienta(body.tipo); break;
       case 'register':   out = registerUser_(body.dni, body.apellidos, body.nombres); break;
       case 'recalcular': out = recalcularTodo(body.anio, body.mes); break;
       default:       out = { ok: false, msg: 'Accion desconocida: ' + action };
@@ -543,6 +545,46 @@ function addTipoHerramienta(tipo) {
     if (!sheet) return { ok:false, msg:'Hoja HERRAMIENTAS no encontrada.' };
     sheet.appendRow([tipo]);
     return { ok:true, tipos: getTiposHerramienta() };
+  } catch(e) { return { ok:false, msg:e.message }; }
+}
+
+function editTipoHerramienta(oldNombre, newNombre) {
+  try {
+    oldNombre = String(oldNombre || '').trim().toUpperCase();
+    newNombre = String(newNombre || '').trim().toUpperCase();
+    if (!newNombre) return { ok:false, msg:'Nombre vacío.' };
+    if (oldNombre === newNombre) return { ok:true, tipos: getTiposHerramienta() };
+    var sheet = getSpreadsheet_().getSheetByName('HERRAMIENTAS');
+    if (!sheet) return { ok:false, msg:'Hoja HERRAMIENTAS no encontrada.' };
+    var data = sheet.getDataRange().getValues();
+    // Verificar duplicado
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]||'').trim().toUpperCase() === newNombre)
+        return { ok:false, msg:'El tipo "' + newNombre + '" ya existe.' };
+    }
+    for (var j = 1; j < data.length; j++) {
+      if (String(data[j][0]||'').trim().toUpperCase() === oldNombre) {
+        sheet.getRange(j+1, 1).setValue(newNombre);
+        return { ok:true, tipos: getTiposHerramienta() };
+      }
+    }
+    return { ok:false, msg:'Tipo "' + oldNombre + '" no encontrado.' };
+  } catch(e) { return { ok:false, msg:e.message }; }
+}
+
+function deleteTipoHerramienta(nombre) {
+  try {
+    nombre = String(nombre || '').trim().toUpperCase();
+    var sheet = getSpreadsheet_().getSheetByName('HERRAMIENTAS');
+    if (!sheet) return { ok:false, msg:'Hoja HERRAMIENTAS no encontrada.' };
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]||'').trim().toUpperCase() === nombre) {
+        sheet.deleteRow(i+1);
+        return { ok:true, tipos: getTiposHerramienta() };
+      }
+    }
+    return { ok:false, msg:'Tipo "' + nombre + '" no encontrado.' };
   } catch(e) { return { ok:false, msg:e.message }; }
 }
 function getSpreadsheetUrl(){try{return getSpreadsheet_().getUrl();}catch(e){return null;}}

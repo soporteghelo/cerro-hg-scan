@@ -54,6 +54,9 @@ var APP = {
 
   nav: function (name) {
     if (APP.user && APP.user.master !== true && name !== 'upload' && name !== 'progress') return;
+    if (APP.user && APP.user.master === true && name === 'tipos' && typeof TIPOS_VIEW !== 'undefined') {
+      // carga diferida al entrar a la vista tipos
+    }
     if (APP._transit) return;
     // Guardia: avisar si hay datos sin guardar al salir del upload
     if (name !== 'upload' && APP._current === 'upload' && typeof UP !== 'undefined' && UP.hasUnsavedData && UP.hasUnsavedData()) {
@@ -80,6 +83,7 @@ var APP = {
         if (name === 'records')   REC.load();
         if (name === 'upload')    UP.reset();
         if (name === 'progress')  PROG.load();
+        if (name === 'tipos')     TIPOS_VIEW.load();
       });
     };
 

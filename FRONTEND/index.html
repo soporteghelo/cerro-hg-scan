@@ -240,6 +240,47 @@
   </div>
 </div>
 
+<!-- TIPOS DE HERRAMIENTA (solo master) -->
+<div id="view-tipos" class="view">
+  <div class="app-header">
+    <button class="icon-btn" onclick="APP.nav('dashboard')" style="margin-right:4px">
+      <span class="material-icons" style="font-size:1.2rem">arrow_back</span>
+    </button>
+    <span class="material-icons">tune</span>
+    <h2>Tipos de Herramienta</h2>
+  </div>
+
+  <div style="padding:14px">
+    <p style="font-size:.78rem;color:var(--text-muted);margin-bottom:12px">
+      Gestiona los tipos que aparecen en el selector de herramienta en todos los módulos.
+    </p>
+
+    <!-- Lista de tipos -->
+    <div id="tipos-list">
+      <div class="skel" style="height:52px;border-radius:12px;margin-bottom:8px"></div>
+      <div class="skel" style="height:52px;border-radius:12px;margin-bottom:8px"></div>
+      <div class="skel" style="height:52px;border-radius:12px;margin-bottom:8px"></div>
+    </div>
+
+    <!-- Agregar nuevo -->
+    <div style="background:#fff;border:2px dashed var(--border);border-radius:12px;padding:12px;margin-top:8px">
+      <div style="font-size:.74rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Agregar nuevo tipo</div>
+      <div style="display:flex;gap:8px">
+        <input id="tipos-new-input" type="text" class="form-control"
+          placeholder="Ej: CHARLA, INSPECCION…"
+          style="flex:1;text-transform:uppercase"
+          oninput="this.value=this.value.toUpperCase()"
+          onkeydown="if(event.key==='Enter')TIPOS_VIEW.addNew()">
+        <button id="tipos-add-btn" class="btn btn-primary" onclick="TIPOS_VIEW.addNew()"
+          style="min-height:42px;padding:0 16px;flex-shrink:0">
+          <span class="material-icons">add</span>
+        </button>
+      </div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+
 <!-- RECORDS -->
 <div id="view-records" class="view">
   <div class="app-header">
@@ -294,6 +335,9 @@
   <button class="nav-btn" data-view="records" onclick="APP.nav('records')">
     <div class="nav-icon-wrap"><span class="material-icons">list_alt</span></div><span>Registros</span>
   </button>
+  <button class="nav-btn" data-view="tipos" onclick="APP.nav('tipos')">
+    <div class="nav-icon-wrap"><span class="material-icons">tune</span></div><span>Tipos</span>
+  </button>
 </nav>
 
 <!-- BOTTOM NAV (operario) -->
@@ -346,13 +390,14 @@
      SCRIPTS
 ══════════════════════════════════════════════════ -->
 <script src="js/config.js?v=6"></script>
-<script src="js/api.js?v=6"></script>
+<script src="js/api.js?v=7"></script>
 <script src="js/app.js?v=6"></script>
 <script src="js/views/config-view.js?v=6"></script>
 <script src="js/views/login-view.js?v=6"></script>
 <script src="js/views/dashboard-view.js?v=6"></script>
 <script src="js/views/upload-view.js?v=6"></script>
 <script src="js/views/progress-view.js?v=7"></script>
+<script src="js/views/tipos-view.js?v=7"></script>
 <script src="js/views/records-view.js?v=6"></script>
 
 <script>
