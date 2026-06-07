@@ -200,3 +200,16 @@ input[list]::-webkit-calendar-picker-indicator{opacity:.4;cursor:pointer}
   .fab{right:calc(50% - 300px + 16px)}
   #toast{bottom:calc(var(--nav-h) + 78px)}
 }
+
+/* ── Sidebar ── */
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
+.sidebar-overlay.open{opacity:1;pointer-events:all}
+.sidebar{position:fixed;left:0;top:0;height:100%;width:272px;background:#fff;z-index:201;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:4px 0 24px rgba(0,0,0,.18);display:flex;flex-direction:column}
+.sidebar.open{transform:translateX(0)}
+.sidebar-header{background:linear-gradient(135deg,var(--primary),var(--primary-light));padding:22px 16px 16px;color:#fff}
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px 0}
+.sidebar-item{width:100%;background:none;border:none;display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;font-size:.86rem;font-weight:600;color:var(--text);text-align:left;transition:background .15s}
+.sidebar-item:hover,.sidebar-item.sb-active{background:rgba(26,35,126,.08);color:var(--primary)}
+.sidebar-item .material-icons{font-size:1.2rem;color:var(--text-muted);flex-shrink:0;transition:color .15s}
+.sidebar-item.sb-active .material-icons,.sidebar-item:hover .material-icons{color:var(--primary)}
+.sidebar-divider{height:1px;background:var(--border);margin:6px 16px}

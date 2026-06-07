@@ -31,6 +31,46 @@
 
 <!-- ── Toast ── -->
 <div id="toast"></div>
+
+<!-- ── Sidebar overlay + drawer ── -->
+<div id="sidebar-overlay" class="sidebar-overlay" onclick="APP.closeSidebar()"></div>
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <div style="font-size:.75rem;opacity:.65;margin-bottom:3px;letter-spacing:.5px">HERRAMIENTAS SCAN</div>
+    <div style="font-weight:800;font-size:.98rem" id="sb-user-name">Panel Master</div>
+    <div style="font-size:.73rem;opacity:.7;margin-top:2px" id="sb-user-role">Administrador</div>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="sidebar-item sb-active" data-view="dashboard" onclick="APP.nav('dashboard')">
+      <span class="material-icons">dashboard</span>Inicio
+    </button>
+    <button class="sidebar-item" data-view="upload" onclick="APP.nav('upload')">
+      <span class="material-icons">upload_file</span>Subir Herramienta
+    </button>
+    <button class="sidebar-item" data-view="records" onclick="APP.nav('records')">
+      <span class="material-icons">list_alt</span>Registros
+    </button>
+    <div class="sidebar-divider"></div>
+    <button class="sidebar-item" data-view="scheduling" onclick="APP.nav('scheduling')">
+      <span class="material-icons">event_note</span>Programación
+    </button>
+    <button class="sidebar-item" data-view="users" onclick="APP.nav('users')">
+      <span class="material-icons">manage_accounts</span>Gestión de Usuarios
+    </button>
+    <div class="sidebar-divider"></div>
+    <button class="sidebar-item" data-view="tipos" onclick="APP.nav('tipos')">
+      <span class="material-icons">tune</span>Tipos de Herramienta
+    </button>
+  </nav>
+  <div style="padding:4px 0 8px;border-top:1px solid var(--border)">
+    <button class="sidebar-item" onclick="APP.closeSidebar();APP.openSettings()" style="color:var(--text-muted)">
+      <span class="material-icons">settings</span>Configuración
+    </button>
+    <button class="sidebar-item" onclick="APP.logout()" style="color:var(--danger)">
+      <span class="material-icons" style="color:var(--danger)">logout</span>Cerrar Sesión
+    </button>
+  </div>
+</div>
 <!-- Datalist compartido para autocompletado de áreas -->
 <datalist id="hs-areas-list"></datalist>
 
@@ -128,7 +168,9 @@
 <!-- DASHBOARD -->
 <div id="view-dashboard" class="view">
   <div class="app-header">
-    <span class="material-icons">dashboard</span>
+    <button class="icon-btn" id="dash-menu-btn" onclick="APP.openSidebar()" title="Menú">
+      <span class="material-icons" style="font-size:1.2rem">menu</span>
+    </button>
     <h2 id="dash-title">Mi Panel</h2>
     <span id="dash-master-badge" class="badge-master" style="display:none">MASTER</span>
     <button class="icon-btn" id="dash-settings-btn" onclick="APP.openSettings()" style="display:none">
@@ -368,6 +410,82 @@
   </div>
 </div>
 
+<!-- SCHEDULING (Programación Mensual) -->
+<div id="view-scheduling" class="view">
+  <div class="app-header">
+    <button class="icon-btn" onclick="APP.nav('dashboard')" style="margin-right:4px">
+      <span class="material-icons" style="font-size:1.2rem">arrow_back</span>
+    </button>
+    <span class="material-icons">event_note</span>
+    <h2>Programación Mensual</h2>
+  </div>
+  <div style="padding:14px">
+    <div class="card" style="padding:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+        <div>
+          <div style="font-size:.65rem;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase">Año</div>
+          <select class="form-control" id="sched-year" style="min-height:40px;font-size:.83rem">
+            <option value="">—</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:.65rem;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase">Mes</div>
+          <select class="form-control" id="sched-month" style="min-height:40px;font-size:.83rem">
+            <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+            <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+            <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Setiembre</option>
+            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </div>
+        <button onclick="SCHED.refresh()" class="btn btn-primary" style="padding:0 14px;min-height:40px;margin-top:0;flex-shrink:0">
+          <span class="material-icons">refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="sched-summary" style="margin-bottom:12px">
+      <div class="skel" style="height:58px;border-radius:12px"></div>
+    </div>
+
+    <button id="sched-prog-todos-btn" class="btn btn-primary" style="margin-bottom:14px" onclick="SCHED.programarTodos()">
+      <span class="material-icons">playlist_add_check</span> Programar pendientes
+    </button>
+
+    <div id="sched-list">
+      <div class="skel" style="height:76px;border-radius:14px;margin-bottom:8px"></div>
+      <div class="skel" style="height:76px;border-radius:14px;margin-bottom:8px"></div>
+      <div class="skel" style="height:76px;border-radius:14px"></div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- USERS (Gestión de Usuarios) -->
+<div id="view-users" class="view">
+  <div class="app-header">
+    <button class="icon-btn" onclick="APP.nav('dashboard')" style="margin-right:4px">
+      <span class="material-icons" style="font-size:1.2rem">arrow_back</span>
+    </button>
+    <span class="material-icons">manage_accounts</span>
+    <h2>Gestión de Usuarios</h2>
+    <button class="icon-btn" onclick="USERS_VIEW.load()" title="Actualizar">
+      <span class="material-icons" style="font-size:1.2rem">refresh</span>
+    </button>
+  </div>
+  <div style="padding:14px">
+    <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:12px;display:flex;align-items:flex-start;gap:6px;background:#fff;border-radius:10px;padding:10px;border:1px solid var(--border)">
+      <span class="material-icons" style="font-size:1rem;color:var(--primary);flex-shrink:0;margin-top:1px">info</span>
+      <span>Asigna el <b>código</b> de cada usuario para vincularlo con la hoja <b>ASIGNACION</b> y programar sus herramientas mensuales.</span>
+    </div>
+    <div id="users-list">
+      <div class="skel" style="height:90px;border-radius:14px;margin-bottom:8px"></div>
+      <div class="skel" style="height:90px;border-radius:14px;margin-bottom:8px"></div>
+      <div class="skel" style="height:90px;border-radius:14px"></div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════════════════
      BOTTOM NAV (master)
 ══════════════════════════════════════════════════ -->
@@ -435,8 +553,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/config.js?v=6"></script>
-<script src="js/api.js?v=8"></script>
-<script src="js/app.js?v=8"></script>
+<script src="js/api.js?v=9"></script>
+<script src="js/app.js?v=9"></script>
 <script src="js/views/config-view.js?v=6"></script>
 <script src="js/views/login-view.js?v=6"></script>
 <script src="js/views/dashboard-view.js?v=7"></script>
@@ -444,6 +562,8 @@
 <script src="js/views/progress-view.js?v=7"></script>
 <script src="js/views/tipos-view.js?v=8"></script>
 <script src="js/views/records-view.js?v=8"></script>
+<script src="js/views/scheduling-view.js?v=1"></script>
+<script src="js/views/users-view.js?v=1"></script>
 
 <script>
 // Inicializar dots de login

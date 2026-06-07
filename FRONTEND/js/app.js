@@ -63,6 +63,7 @@ var APP = {
 
   nav: function (name) {
     if (APP.user && APP.user.master !== true && name !== 'upload' && name !== 'progress') return;
+    APP.closeSidebar();
     if (APP.user && APP.user.master === true && name === 'tipos' && typeof TIPOS_VIEW !== 'undefined') {
       // carga diferida al entrar a la vista tipos
     }
@@ -88,11 +89,17 @@ var APP = {
         APP._transit  = false;
         APP._current  = name;
         // hooks de vista
-        if (name === 'dashboard') DASH.load();
-        if (name === 'records')   REC.load();
-        if (name === 'upload')    UP.reset();
-        if (name === 'progress')  PROG.load();
-        if (name === 'tipos')     TIPOS_VIEW.load();
+        if (name === 'dashboard')  DASH.load();
+        if (name === 'records')    REC.load();
+        if (name === 'upload')     UP.reset();
+        if (name === 'progress')   PROG.load();
+        if (name === 'tipos')      TIPOS_VIEW.load();
+        if (name === 'scheduling') SCHED.load();
+        if (name === 'users')      USERS_VIEW.load();
+        // Actualizar sidebar active
+        document.querySelectorAll('.sidebar-item[data-view]').forEach(function(b){
+          b.classList.toggle('sb-active', b.dataset.view === name);
+        });
       });
     };
 
@@ -110,6 +117,10 @@ var APP = {
   afterLogin: function (user) {
     APP.user = user;
     localStorage.setItem('hs_session', JSON.stringify(user));
+    var sbName = document.getElementById('sb-user-name');
+    var sbRole = document.getElementById('sb-user-role');
+    if (sbName) sbName.textContent = user.nombre || 'Usuario';
+    if (sbRole) sbRole.textContent = user.cargo || user.rol || '';
     if (user.master === true) {
       document.getElementById('bottom-nav').style.display = 'flex';
       APP.nav('dashboard');
@@ -135,6 +146,16 @@ var APP = {
     });
     APP.showView('login');
     LOGIN.reset();
+  },
+
+  openSidebar: function () {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('open');
+  },
+
+  closeSidebar: function () {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
   },
 
   openSettings: function () {

@@ -92,5 +92,29 @@ var API = {
 
   recalcular: function (anio, mes) {
     return API._post({ action: 'recalcular', anio: anio || '', mes: mes || '' });
+  },
+
+  usuariosMaster: function () {
+    return API._get({ action: 'usuariosMaster' });
+  },
+
+  asignacion: function () {
+    return API._get({ action: 'asignacion' });
+  },
+
+  estadoProgramacion: function (anio, mes) {
+    return API._get({ action: 'estadoProgramacion', anio: anio, mes: mes });
+  },
+
+  programarMes: function (dni, codigo, anio, mes) {
+    return API._post({ action: 'programarMes', dni: dni, codigo: codigo, anio: anio, mes: mes });
+  },
+
+  programarTodos: function (anio, mes) {
+    return API._post({ action: 'programarTodos', anio: anio, mes: mes });
+  },
+
+  updateCodigoUsuario: function (dni, codigo) {
+    return API._post({ action: 'updateCodigoUsuario', dni: dni, codigo: codigo });
   }
 };
