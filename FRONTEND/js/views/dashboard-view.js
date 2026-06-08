@@ -40,6 +40,7 @@ var DASH = {
       el.innerHTML = '<div style="padding:0 0 8px"><div class="empty-state" style="margin:0"><span class="material-icons">group</span><p>Sin programación por persona.</p></div></div>';
       return;
     }
+    // Agrupar por persona y acumular totales
     var byUser = {};
     rows.forEach(function (r) {
       var key = r.nombre || r.dni;
@@ -47,12 +48,19 @@ var DASH = {
       byUser[key].total += (r.programados || 0);
       byUser[key].ejec  += (r.ejecutados  || 0);
     });
+    // Ordenar por % cumplimiento DESC → top 5
+    var sorted = Object.keys(byUser).map(function (k) { return byUser[k]; });
+    sorted.sort(function (a, b) {
+      var pa = a.total > 0 ? a.ejec / a.total : 0;
+      var pb = b.total > 0 ? b.ejec / b.total : 0;
+      return pb - pa;
+    });
+    var top5 = sorted.slice(0, 5);
     var html = '';
-    Object.keys(byUser).sort().forEach(function (key) {
-      var u   = byUser[key];
+    top5.forEach(function (u) {
       var pct = u.total > 0 ? Math.round((u.ejec / u.total) * 100) : 0;
       var cl  = pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--primary)' : 'var(--warning)';
-      var ini = key.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('');
+      var ini = u.nombre.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('');
       html +=
         '<div class="card" style="margin-bottom:8px">' +
           '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +

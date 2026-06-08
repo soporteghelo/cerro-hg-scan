@@ -3,9 +3,10 @@
 // ═══════════════════════════════════════════════════════════════
 
 var SCHED = {
-  _data: [],
-  _anio: new Date().getFullYear(),
-  _mes:  new Date().getMonth() + 1,
+  _data:   [],
+  _anio:   new Date().getFullYear(),
+  _mes:    new Date().getMonth() + 1,
+  _filter: 'todos',   // 'todos' | 'programados' | 'pendientes'
 
   load: function () {
     SCHED._buildYearOptions();
@@ -26,6 +27,7 @@ var SCHED = {
     var y = parseInt(document.getElementById('sched-year').value) || new Date().getFullYear();
     var m = parseInt(document.getElementById('sched-month').value) || new Date().getMonth() + 1;
     SCHED._anio = y; SCHED._mes = m;
+    SCHED._filter = 'todos';
     SCHED.load();
   },
 
@@ -49,28 +51,77 @@ var SCHED = {
   },
 
   _render: function () {
-    var data = SCHED._data;
-    var total    = data.length;
-    var progr    = data.filter(function (u) { return u.programado; }).length;
-    var pend     = total - progr;
-    var sinCod   = data.filter(function (u) { return !u.codigo; }).length;
+    var data   = SCHED._data;
+    var total  = data.length;
+    var progr  = data.filter(function (u) { return u.programado; }).length;
+    var pend   = total - progr;
+    var sinCod = data.filter(function (u) { return !u.codigo; }).length;
 
+    // ── Resumen de contadores ─────────────────────────────────
     document.getElementById('sched-summary').innerHTML =
       '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">' +
-        SCHED._chip('group',           total,  'Total',   'var(--primary)') +
-        SCHED._chip('check_circle',    progr,  'Progr.',  'var(--success)') +
-        SCHED._chip('pending_actions', pend,   'Pend.',   'var(--warning)') +
+        SCHED._chip('group',           total, 'Total',  'var(--primary)') +
+        SCHED._chip('check_circle',    progr, 'Progr.', 'var(--success)') +
+        SCHED._chip('pending_actions', pend,  'Pend.',  'var(--warning)') +
       '</div>' +
       (sinCod ? '<div style="margin-top:8px;font-size:.72rem;color:var(--warning);display:flex;align-items:center;gap:4px">' +
         '<span class="material-icons" style="font-size:.9rem">warning</span>' + sinCod + ' usuario(s) sin código asignado</div>' : '');
 
+    // ── Pills de filtro ───────────────────────────────────────
+    var filters = [
+      { key: 'todos',       label: 'Todos',       count: total, icon: 'group',           color: 'var(--primary)' },
+      { key: 'programados', label: 'Programados', count: progr, icon: 'check_circle',    color: 'var(--success)' },
+      { key: 'pendientes',  label: 'Pendientes',  count: pend,  icon: 'pending_actions', color: 'var(--warning)' }
+    ];
+    var pillHtml = '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px">';
+    filters.forEach(function (f) {
+      var active = SCHED._filter === f.key;
+      pillHtml +=
+        '<button onclick="SCHED.setFilter(\'' + f.key + '\')" ' +
+          'style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap;' +
+          'border:1.5px solid ' + (active ? f.color : 'var(--border)') + ';' +
+          'background:' + (active ? f.color : '#fff') + ';' +
+          'color:' + (active ? '#fff' : 'var(--text-muted)') + ';' +
+          'font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .15s">' +
+          '<span class="material-icons" style="font-size:.8rem">' + f.icon + '</span>' +
+          f.label + ' (' + f.count + ')' +
+        '</button>';
+    });
+    pillHtml += '</div>';
+    document.getElementById('sched-filter').innerHTML = pillHtml;
+
+    SCHED._applyFilter();
+  },
+
+  setFilter: function (f) {
+    SCHED._filter = f;
+    SCHED._render();
+  },
+
+  _applyFilter: function () {
     var listEl = document.getElementById('sched-list');
+    var data   = SCHED._data;
+
     if (!data.length) {
       listEl.innerHTML = '<div class="empty-state"><span class="material-icons">people_outline</span><p>Sin usuarios configurados.</p></div>';
       return;
     }
 
-    var sorted = data.slice().sort(function (a, b) {
+    // Aplicar filtro activo
+    var filtered = data.filter(function (u) {
+      if (SCHED._filter === 'programados') return u.programado;
+      if (SCHED._filter === 'pendientes')  return !u.programado;
+      return true;
+    });
+
+    if (!filtered.length) {
+      var emptyMsg = SCHED._filter === 'programados' ? 'Ningún usuario programado aún.' : 'Todos los usuarios ya están programados.';
+      listEl.innerHTML = '<div class="empty-state"><span class="material-icons">task_alt</span><p>' + emptyMsg + '</p></div>';
+      return;
+    }
+
+    // Ordenar: pendientes primero (dentro de cada filtro), luego nombre
+    var sorted = filtered.slice().sort(function (a, b) {
       if (a.programado !== b.programado) return a.programado ? 1 : -1;
       return (a.nombre || '').localeCompare(b.nombre || '');
     });

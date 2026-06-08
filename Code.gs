@@ -55,6 +55,12 @@ function doPost(e) {
   catch (err) { return jsonResponse_({ ok: false, msg: 'JSON invalido' }); }
   var action = body.action || '';
   var out;
+  // Invalidar GAS cache antes del write correspondiente
+  var _BUST_GAS = {
+    addTipo: ['tipos'], editTipo: ['tipos'], deleteTipo: ['tipos'],
+    register: ['usuarios_master'], updateUsuario: ['usuarios_master'], updateCodigoUsuario: ['usuarios_master']
+  };
+  if (_BUST_GAS[action]) _gasBust_(_BUST_GAS[action]);
   try {
     switch (action) {
       case 'config':    out = validateAndSaveConfig(body.sheetsUrl, body.driveUrl, body.personalUrl); break;
@@ -67,6 +73,7 @@ function doPost(e) {
       case 'programarMes':        out = programarMes(body.dni, body.codigo, body.anio, body.mes); break;
       case 'programarTodos':      out = programarTodos(body.anio, body.mes); break;
       case 'updateCodigoUsuario': out = updateCodigoUsuario(body.dni, body.codigo); break;
+      case 'updateUsuario':      out = updateUsuario(body.dni, body); break;
       default:       out = { ok: false, msg: 'Accion desconocida: ' + action };
     }
   } catch (err) { out = { ok: false, msg: err.message }; }
@@ -75,6 +82,25 @@ function doPost(e) {
 
 function jsonResponse_(data) {
   return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ────────────────────────────────────────────────────────────────
+// GAS CACHE — CacheService helpers (lectura optimizada)
+// ────────────────────────────────────────────────────────────────
+
+function _gasCache_(key, loader, ttlSec) {
+  try {
+    var c   = CacheService.getScriptCache();
+    var hit = c.get(key);
+    if (hit) return JSON.parse(hit);
+  } catch (e) {}
+  var data = loader();
+  try { CacheService.getScriptCache().put(key, JSON.stringify(data), ttlSec || 300); } catch (e) {}
+  return data;
+}
+
+function _gasBust_(keys) {
+  try { CacheService.getScriptCache().removeAll(keys); } catch (e) {}
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -557,22 +583,24 @@ function registerUser_(dni, apellidos, nombres) {
 // ────────────────────────────────────────────────────────────────
 
 function getTiposHerramienta(){
-  var def=[
-    {nombre:'AUD. IPERC',reqNombre:false},{nombre:'AUD. PETAR',reqNombre:false},
-    {nombre:'AUD. HABLA FACIL',reqNombre:false},{nombre:'OPT',reqNombre:true},
-    {nombre:'TALLER PERCEPCION',reqNombre:false},{nombre:'ORT',reqNombre:false},
-    {nombre:'VCC',reqNombre:false},{nombre:'EV. EFICACIA',reqNombre:false},{nombre:'OTRO',reqNombre:false}
-  ];
-  try {
-    var sheet = getSpreadsheet_().getSheetByName('HERRAMIENTAS');
-    if (!sheet || sheet.getLastRow() < 2) return def;
-    var vals = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
-    var result = vals.map(function(r){
-      var nombre = String(r[0]||'').trim();
-      return nombre ? {nombre:nombre, reqNombre:String(r[1]||'').trim().toUpperCase()==='SI'} : null;
-    }).filter(Boolean);
-    return result.length ? result : def;
-  } catch(e) { return def; }
+  return _gasCache_('tipos', function() {
+    var def=[
+      {nombre:'AUD. IPERC',reqNombre:false},{nombre:'AUD. PETAR',reqNombre:false},
+      {nombre:'AUD. HABLA FACIL',reqNombre:false},{nombre:'OPT',reqNombre:true},
+      {nombre:'TALLER PERCEPCION',reqNombre:false},{nombre:'ORT',reqNombre:false},
+      {nombre:'VCC',reqNombre:false},{nombre:'EV. EFICACIA',reqNombre:false},{nombre:'OTRO',reqNombre:false}
+    ];
+    try {
+      var sheet = getSpreadsheet_().getSheetByName('HERRAMIENTAS');
+      if (!sheet || sheet.getLastRow() < 2) return def;
+      var vals = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+      var result = vals.map(function(r){
+        var nombre = String(r[0]||'').trim();
+        return nombre ? {nombre:nombre, reqNombre:String(r[1]||'').trim().toUpperCase()==='SI'} : null;
+      }).filter(Boolean);
+      return result.length ? result : def;
+    } catch(e) { return def; }
+  }, 600);
 }
 
 function addTipoHerramienta(tipo, reqNombre) {
@@ -674,24 +702,26 @@ function recalcularTodo(anio, mes) {
 // ────────────────────────────────────────────────────────────────
 
 function getUsuariosMaster() {
-  try {
-    var sheet = getSpreadsheet_().getSheetByName('USUARIOS_MASTER');
-    if (!sheet || sheet.getLastRow() < 2) return [];
-    var data = sheet.getDataRange().getValues();
-    var result = [];
-    for (var i = 1; i < data.length; i++) {
-      var activo = data[i][3];
-      var esActivo = activo === true || String(activo).toUpperCase() === 'TRUE' || String(activo).toUpperCase() === 'VERDADERO';
-      result.push({
-        dni:    normDNI_(data[i][0]),
-        nombre: String(data[i][1]||'').trim(),
-        rol:    String(data[i][2]||'').trim(),
-        activo: esActivo,
-        codigo: String(data[i][5]||'').trim()
-      });
-    }
-    return result;
-  } catch(e) { return []; }
+  return _gasCache_('usuarios_master', function() {
+    try {
+      var sheet = getSpreadsheet_().getSheetByName('USUARIOS_MASTER');
+      if (!sheet || sheet.getLastRow() < 2) return [];
+      var data = sheet.getDataRange().getValues();
+      var result = [];
+      for (var i = 1; i < data.length; i++) {
+        var activo = data[i][3];
+        var esActivo = activo === true || String(activo).toUpperCase() === 'TRUE' || String(activo).toUpperCase() === 'VERDADERO';
+        result.push({
+          dni:    normDNI_(data[i][0]),
+          nombre: String(data[i][1]||'').trim(),
+          rol:    String(data[i][2]||'').trim(),
+          activo: esActivo,
+          codigo: String(data[i][5]||'').trim()
+        });
+      }
+      return result;
+    } catch(e) { return []; }
+  }, 300);
 }
 
 function updateCodigoUsuario(dni, codigo) {
@@ -710,26 +740,56 @@ function updateCodigoUsuario(dni, codigo) {
   } catch(e) { return { ok:false, msg:e.message }; }
 }
 
+function updateUsuario(dni, data) {
+  try {
+    var sheet = getSpreadsheet_().getSheetByName('USUARIOS_MASTER');
+    if (!sheet) return { ok:false, msg:'Hoja no encontrada.' };
+    var rows = sheet.getDataRange().getValues();
+    // Asegurar columna F (CODIGO) existe en header
+    if (!rows[0][5]) sheet.getRange(1, 6).setValue('CODIGO');
+    for (var i = 1; i < rows.length; i++) {
+      if (normDNI_(rows[i][0]) === normDNI_(dni)) {
+        // col B=Nombre, C=Rol, D=Activo, E=Password(no tocar), F=Codigo
+        var rng = sheet.getRange(i+1, 2, 1, 5);
+        var vals = rng.getValues()[0];
+        vals[0] = String(data.nombre || vals[0]).trim().toUpperCase();           // B
+        vals[1] = String(data.rol    || vals[1]).trim().toUpperCase();           // C
+        vals[2] = (data.activo === true || data.activo === 'true');              // D
+        if (data.password && String(data.password).trim()) {
+          vals[3] = String(data.password).trim();                                // E — solo si se envía
+        }
+        vals[4] = String(data.codigo || '').trim().toUpperCase();                // F
+        rng.setValues([vals]);
+        return { ok:true };
+      }
+    }
+    return { ok:false, msg:'Usuario no encontrado.' };
+  } catch(e) { return { ok:false, msg:e.message }; }
+}
+
 // ────────────────────────────────────────────────────────────────
 // ASIGNACION Y PROGRAMACIÓN MENSUAL
 // ────────────────────────────────────────────────────────────────
 
 function getAsignacionData() {
-  try {
-    var sheet = getSpreadsheet_().getSheetByName('ASIGNACION');
-    if (!sheet || sheet.getLastRow() < 2) return [];
-    var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 3).getValues();
-    return data.filter(function(r){ return String(r[0]||'').trim(); }).map(function(r){
-      return { codigo: String(r[0]||'').trim().toUpperCase(), herramienta: String(r[1]||'').trim(), cantidad: parseInt(r[2]||1,10)||1 };
-    });
-  } catch(e) { return []; }
+  return _gasCache_('asignacion', function() {
+    try {
+      var sheet = getSpreadsheet_().getSheetByName('ASIGNACION');
+      if (!sheet || sheet.getLastRow() < 2) return [];
+      var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 3).getValues();
+      return data.filter(function(r){ return String(r[0]||'').trim(); }).map(function(r){
+        return { codigo: String(r[0]||'').trim().toUpperCase(), herramienta: String(r[1]||'').trim(), cantidad: parseInt(r[2]||1,10)||1 };
+      });
+    } catch(e) { return []; }
+  }, 600);
 }
 
 function getEstadoProgramacion(anio, mes) {
   try {
-    var usuarios = getUsuariosMaster().filter(function(u){ return String(u.rol).toUpperCase() !== 'ADMIN' || true; });
-    // Excluir al admin del sistema (DNI 00000000)
-    usuarios = usuarios.filter(function(u){ return u.nombre !== 'ADMINISTRADOR'; });
+    // Solo usuarios activos con ROL distinto de ADMIN (admins son gestores, no se programan)
+    var usuarios = getUsuariosMaster().filter(function(u){
+      return u.activo && String(u.rol).toUpperCase() !== 'ADMIN';
+    });
     var asignacion = getAsignacionData();
     var progSheet = getSpreadsheet_().getSheetByName('PROGRAMADOS');
     var progData = (progSheet && progSheet.getLastRow() > 1) ? progSheet.getDataRange().getValues().slice(1) : [];
@@ -763,23 +823,27 @@ function programarMes(dni, codigo, anio, mes) {
     var existing = (pS.getLastRow()>1?pS.getDataRange().getValues().slice(1):[]).filter(function(r){
       return normDNI_(r[0])===normDNI_(dni) && parseInt(r[4],10)===anioN && normMes_(r[5])===mesN;
     });
-    if (existing.length) return { ok:false, msg:'Ya programado para este mes.' };
+    // Filtrar solo tipos que aún no están programados en este mes
+    var tiposExistentes = existing.map(function(r){ return String(r[3]||'').trim(); });
+    var asigNueva = asig.filter(function(a){ return tiposExistentes.indexOf(a.herramienta) === -1; });
+    if (!asigNueva.length) return { ok:false, msg:'Ya programado para este mes.' };
     var usuarios = getUsuariosMaster();
     var nombre = ''; var cod = codigo;
     for (var k=0;k<usuarios.length;k++){
       if(normDNI_(usuarios[k].dni)===normDNI_(dni)){nombre=usuarios[k].nombre;if(usuarios[k].codigo)cod=usuarios[k].codigo;break;}
     }
-    asig.forEach(function(a){
+    asigNueva.forEach(function(a){
       pS.appendRow([normDNI_(dni), cod, nombre, a.herramienta, anioN, mesN, a.cantidad, 0, a.cantidad, 0]);
     });
-    return { ok:true, added:asig.length };
+    return { ok:true, added:asigNueva.length };
   } catch(e) { return { ok:false, msg:e.message }; }
 }
 
 function programarTodos(anio, mes) {
   try {
+    // Excluir usuarios con ROL=ADMIN (son gestores, no se programan mensualmente)
     var usuarios = getUsuariosMaster().filter(function(u){
-      return u.nombre !== 'ADMINISTRADOR' && u.codigo && u.activo;
+      return String(u.rol).toUpperCase() !== 'ADMIN' && u.codigo && u.activo;
     });
     var asignacion = getAsignacionData();
     var ss = getSpreadsheet_();
@@ -789,12 +853,15 @@ function programarTodos(anio, mes) {
     var progData = pS.getLastRow()>1 ? pS.getDataRange().getValues().slice(1) : [];
     var totalAdded=0, skipped=0;
     usuarios.forEach(function(u){
-      var yaProgr = progData.some(function(r){
-        return normDNI_(r[0])===normDNI_(u.dni) && parseInt(r[4],10)===anioN && normMes_(r[5])===mesN;
-      });
-      if(yaProgr){skipped++;return;}
-      var asig = asignacion.filter(function(a){return a.codigo===u.codigo.toUpperCase();});
+      var asig = asignacion.filter(function(a){ return a.codigo===u.codigo.toUpperCase(); });
       asig.forEach(function(a){
+        // Verificar por usuario+tipo+mes para evitar duplicados exactos
+        var yaTiene = progData.some(function(r){
+          return normDNI_(r[0])===normDNI_(u.dni) &&
+                 String(r[3]||'').trim()===a.herramienta &&
+                 parseInt(r[4],10)===anioN && normMes_(r[5])===mesN;
+        });
+        if (yaTiene) { skipped++; return; }
         pS.appendRow([normDNI_(u.dni), u.codigo, u.nombre, a.herramienta, anioN, mesN, a.cantidad, 0, a.cantidad, 0]);
         totalAdded++;
       });

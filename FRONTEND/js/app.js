@@ -94,8 +94,9 @@ var APP = {
         if (name === 'upload')     UP.reset();
         if (name === 'progress')   PROG.load();
         if (name === 'tipos')      TIPOS_VIEW.load();
-        if (name === 'scheduling') SCHED.load();
-        if (name === 'users')      USERS_VIEW.load();
+        if (name === 'scheduling')       SCHED.load();
+        if (name === 'users')           USERS_VIEW.load();
+        if (name === 'personas-avance') PERSONAS_VIEW.load();
         // Actualizar sidebar active
         document.querySelectorAll('.sidebar-item[data-view]').forEach(function(b){
           b.classList.toggle('sb-active', b.dataset.view === name);
@@ -133,6 +134,7 @@ var APP = {
   },
 
   logout: function () {
+    API.bustAll();
     APP.user = null;
     localStorage.removeItem('hs_session');
     closeModal('modal-settings');
@@ -224,6 +226,36 @@ function fileIcon(file) {
   var ext = (file.name.split('.').pop() || '').toLowerCase();
   var map = { pdf: 'picture_as_pdf', doc: 'description', docx: 'description', xls: 'table_chart', xlsx: 'table_chart' };
   return '<span class="material-icons" style="color:var(--primary-light)">' + (map[ext] || 'insert_drive_file') + '</span>';
+}
+
+// ── Debounce ───────────────────────────────────────────────────
+function debounce(fn, ms) {
+  var t;
+  return function () {
+    var ctx = this, args = arguments;
+    clearTimeout(t);
+    t = setTimeout(function () { fn.apply(ctx, args); }, ms || 300);
+  };
+}
+
+// ── Render por lotes (listas grandes sin bloquear el hilo UI) ──
+function renderChunked(container, items, renderOne, chunkSize) {
+  container.innerHTML = '';
+  if (!items || !items.length) return;
+  chunkSize = chunkSize || 25;
+  var i = 0;
+  function next() {
+    var frag = document.createDocumentFragment();
+    var end  = Math.min(i + chunkSize, items.length);
+    for (; i < end; i++) {
+      var tmp = document.createElement('div');
+      tmp.innerHTML = renderOne(items[i], i);
+      while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+    }
+    container.appendChild(frag);
+    if (i < items.length) requestAnimationFrame(next);
+  }
+  requestAnimationFrame(next);
 }
 
 // ── Init ───────────────────────────────────────────────────────

@@ -5,6 +5,7 @@
 var LOGIN = {
   _pending:  null,
   _timer:    null,
+  _loading:  false,
 
   reset: function () {
     var el = document.getElementById('login-dni');
@@ -23,7 +24,8 @@ var LOGIN = {
     if (pi) pi.value = '';
     var lc = document.getElementById('login-clear');
     if (lc) lc.style.display = 'none';
-    LOGIN._pending = null;
+    LOGIN._pending  = null;
+    LOGIN._loading  = false;
     for (var i = 0; i < 8; i++) {
       var d = document.getElementById('dot-' + i);
       if (d) d.style.background = 'var(--border)';
@@ -68,8 +70,11 @@ var LOGIN = {
   },
 
   doLogin: function () {
+    if (LOGIN._loading) return;
     var dni = document.getElementById('login-dni').value.trim();
     if (dni.length < 7) return;
+    clearTimeout(LOGIN._timer);   // cancelar timer pendiente si el usuario ya hizo click/Enter
+    LOGIN._loading = true;
     var btn = document.getElementById('login-btn-main');
     setLoading(btn, true);
     document.getElementById('login-msg').innerHTML = '';
@@ -77,6 +82,7 @@ var LOGIN = {
 
     API.login(dni)
       .then(function (res) {
+        LOGIN._loading = false;
         setLoading(btn, false);
         if (!res.ok) {
           LOGIN.showError(res.msg || 'DNI no encontrado');
@@ -100,7 +106,7 @@ var LOGIN = {
         vibrate([50, 30, 100]);
         APP.afterLogin(res);
       })
-      .catch(function () { setLoading(btn, false); LOGIN.showError('Error de conexión'); });
+      .catch(function () { LOGIN._loading = false; setLoading(btn, false); LOGIN.showError('Error de conexión'); });
   },
 
   submitPassword: function () {

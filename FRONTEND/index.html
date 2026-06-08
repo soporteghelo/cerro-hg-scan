@@ -225,7 +225,10 @@
   <div class="section-title"><span class="material-icons">bar_chart</span> Avance por Tipo</div>
   <div style="padding:0 14px" id="dash-tipos"></div>
 
-  <div class="section-title" id="dash-personas-title" style="display:none"><span class="material-icons">group</span> Avance por Persona</div>
+  <div class="section-title" id="dash-personas-title" style="display:none;justify-content:space-between;padding-right:14px">
+    <span style="display:flex;align-items:center;gap:6px"><span class="material-icons">group</span> Avance por Persona</span>
+    <button onclick="APP.nav('personas-avance')" style="background:none;border:none;color:var(--primary);font-size:.75rem;font-weight:700;cursor:pointer">Ver todos →</button>
+  </div>
   <div style="padding:0 14px 4px" id="dash-personas"></div>
 
   <div class="section-title" style="justify-content:space-between;padding-right:14px">
@@ -410,6 +413,61 @@
   </div>
 </div>
 
+<!-- PERSONAS AVANCE (Avance por Evaluador — vista completa) -->
+<div id="view-personas-avance" class="view">
+  <div class="app-header">
+    <button class="icon-btn" onclick="APP.nav('dashboard')" style="margin-right:4px">
+      <span class="material-icons" style="font-size:1.2rem">arrow_back</span>
+    </button>
+    <span class="material-icons">supervisor_account</span>
+    <h2>Avance por Evaluador</h2>
+    <button class="icon-btn" onclick="PERSONAS_VIEW.load()" title="Actualizar">
+      <span class="material-icons" style="font-size:1.2rem">refresh</span>
+    </button>
+  </div>
+  <div style="padding:14px">
+    <!-- Filtros -->
+    <div style="background:var(--surface);border-radius:14px;padding:12px 12px 8px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:.6rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;padding-left:2px">Año</div>
+          <select id="pav-anio" class="form-control" style="height:36px;font-size:.8rem;width:100%" onchange="PERSONAS_VIEW.load()">
+          </select>
+        </div>
+        <div>
+          <div style="font-size:.6rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;padding-left:2px">Mes</div>
+          <select id="pav-mes" class="form-control" style="height:36px;font-size:.8rem;width:100%" onchange="PERSONAS_VIEW.applyFilters(true)">
+            <option value="">Todos</option>
+            <option value="1">Enero</option><option value="2">Febrero</option>
+            <option value="3">Marzo</option><option value="4">Abril</option>
+            <option value="5">Mayo</option><option value="6">Junio</option>
+            <option value="7">Julio</option><option value="8">Agosto</option>
+            <option value="9">Septiembre</option><option value="10">Octubre</option>
+            <option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:.6rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;padding-left:2px">Código</div>
+          <select id="pav-codigo" class="form-control" style="height:36px;font-size:.8rem;width:100%" onchange="PERSONAS_VIEW.applyFilters(true)">
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:.6rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;padding-left:2px">Evaluador</div>
+          <div style="position:relative">
+            <span class="material-icons" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:1rem;color:var(--text-muted);pointer-events:none">search</span>
+            <input id="pav-eval-input" type="text" placeholder="Buscar..." autocomplete="off"
+              class="form-control" style="height:36px;font-size:.8rem;padding-left:30px;width:100%;box-sizing:border-box"
+              oninput="PERSONAS_VIEW.applyFilters()">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="pav-list"></div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+
 <!-- SCHEDULING (Programación Mensual) -->
 <div id="view-scheduling" class="view">
   <div class="app-header">
@@ -451,6 +509,8 @@
       <span class="material-icons">playlist_add_check</span> Programar pendientes
     </button>
 
+    <div id="sched-filter" style="margin-bottom:10px"></div>
+
     <div id="sched-list">
       <div class="skel" style="height:76px;border-radius:14px;margin-bottom:8px"></div>
       <div class="skel" style="height:76px;border-radius:14px;margin-bottom:8px"></div>
@@ -477,6 +537,21 @@
       <span class="material-icons" style="font-size:1rem;color:var(--primary);flex-shrink:0;margin-top:1px">info</span>
       <span>Asigna el <b>código</b> de cada usuario para vincularlo con la hoja <b>ASIGNACION</b> y programar sus herramientas mensuales.</span>
     </div>
+    <!-- Filtros -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <div style="position:relative;flex:1;min-width:0">
+        <span class="material-icons" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:1rem;color:var(--text-muted);pointer-events:none">search</span>
+        <input id="uf-nombre" class="form-control" type="text" placeholder="Buscar nombre…"
+          style="padding-left:30px;height:38px;font-size:.8rem"
+          oninput="USERS_VIEW.applyFilters()">
+      </div>
+      <select id="uf-codigo" class="form-control"
+        style="width:110px;flex-shrink:0;height:38px;font-size:.8rem"
+        onchange="USERS_VIEW.applyFilters(true)">
+        <option value="">Todos</option>
+      </select>
+    </div>
+
     <div id="users-list">
       <div class="skel" style="height:90px;border-radius:14px;margin-bottom:8px"></div>
       <div class="skel" style="height:90px;border-radius:14px;margin-bottom:8px"></div>
@@ -517,6 +592,68 @@
   </button>
 </nav>
 
+<!-- ── Modal Editar Usuario ── -->
+<div class="modal-overlay" id="modal-edit-user">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 style="font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:14px">
+      <span class="material-icons" style="vertical-align:middle;margin-right:4px">manage_accounts</span>Editar Usuario
+    </h3>
+
+    <!-- DNI (read-only) -->
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">DNI</label>
+      <div id="ue-dni" style="font-size:.95rem;font-weight:700;color:var(--primary);padding:8px 0;border-bottom:1px solid var(--border)"></div>
+    </div>
+
+    <!-- Nombre -->
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">Nombre</label>
+      <input id="ue-nombre" class="form-control" type="text" placeholder="APELLIDOS NOMBRES" style="text-transform:uppercase">
+    </div>
+
+    <!-- Rol -->
+    <div class="form-group" style="margin-bottom:12px">
+      <label class="form-label">Rol</label>
+      <select id="ue-rol" class="form-control" onchange="USERS_VIEW.onRolChange(this.value)">
+        <option value="SUPERVISOR">SUPERVISOR</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="INVITADO">INVITADO</option>
+      </select>
+    </div>
+
+    <!-- Contraseña (solo ADMIN) -->
+    <div id="ue-pwd-group" class="form-group" style="margin-bottom:12px;display:none">
+      <label class="form-label">Contraseña</label>
+      <input id="ue-password" class="form-control" type="password" placeholder="Dejar vacío para no cambiar" autocomplete="new-password">
+    </div>
+
+    <!-- Activo -->
+    <div class="form-group" style="margin-bottom:12px;display:flex;align-items:center;gap:12px">
+      <label class="form-label" style="margin-bottom:0">Activo</label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input id="ue-activo" type="checkbox" style="width:18px;height:18px;accent-color:var(--primary)">
+        <span style="font-size:.82rem;color:var(--text-muted)">Usuario habilitado</span>
+      </label>
+    </div>
+
+    <!-- Código (dropdown) -->
+    <div class="form-group" style="margin-bottom:18px">
+      <label class="form-label">Código de asignación</label>
+      <select id="ue-codigo" class="form-control">
+        <option value="">— Sin código —</option>
+      </select>
+    </div>
+
+    <button id="ue-save-btn" class="btn btn-primary" onclick="USERS_VIEW.saveEdit()" style="margin-bottom:8px">
+      <span class="material-icons">save</span> Guardar cambios
+    </button>
+    <button class="btn btn-outline" onclick="closeModal('modal-edit-user')">
+      <span class="material-icons">close</span> Cancelar
+    </button>
+  </div>
+</div>
+
 <!-- ── Modal Settings ── -->
 <div class="modal-overlay" id="modal-settings">
   <div class="modal-sheet">
@@ -547,23 +684,50 @@
   </div>
 </div>
 
+<!-- MODAL DETALLE EVALUADOR -->
+<div class="modal-overlay" id="modal-eval-detail">
+  <div class="modal-sheet" style="max-height:80vh;display:flex;flex-direction:column">
+    <div class="modal-handle"></div>
+    <div style="padding:16px 16px 0;flex-shrink:0">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+        <div style="flex:1;min-width:0;margin-right:8px">
+          <div id="pav-modal-name" style="font-weight:800;font-size:.95rem;line-height:1.3"></div>
+          <div id="pav-modal-cargo" style="font-size:.72rem;color:var(--text-muted);margin-top:2px"></div>
+        </div>
+        <button class="icon-btn" onclick="closeModal('modal-eval-detail')" style="flex-shrink:0">
+          <span class="material-icons" style="font-size:1.2rem">close</span>
+        </button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg);border-radius:12px;margin-bottom:14px">
+        <div id="pav-modal-total" style="font-size:.76rem;color:var(--text-muted)"></div>
+        <div id="pav-modal-pct" style="font-size:1.5rem;font-weight:900"></div>
+      </div>
+      <div style="font-size:.68rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Detalle de evaluaciones</div>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:0 16px 16px">
+      <div id="pav-modal-rows"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════════════════
      SCRIPTS
 ══════════════════════════════════════════════════ -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/config.js?v=6"></script>
-<script src="js/api.js?v=9"></script>
-<script src="js/app.js?v=9"></script>
+<script src="js/api.js?v=11"></script>
+<script src="js/app.js?v=10"></script>
 <script src="js/views/config-view.js?v=6"></script>
 <script src="js/views/login-view.js?v=6"></script>
-<script src="js/views/dashboard-view.js?v=7"></script>
+<script src="js/views/dashboard-view.js?v=8"></script>
 <script src="js/views/upload-view.js?v=10"></script>
 <script src="js/views/progress-view.js?v=7"></script>
 <script src="js/views/tipos-view.js?v=8"></script>
 <script src="js/views/records-view.js?v=8"></script>
-<script src="js/views/scheduling-view.js?v=1"></script>
-<script src="js/views/users-view.js?v=1"></script>
+<script src="js/views/personas-avance-view.js?v=4"></script>
+<script src="js/views/scheduling-view.js?v=2"></script>
+<script src="js/views/users-view.js?v=5"></script>
 
 <script>
 // Inicializar dots de login
